@@ -33,6 +33,7 @@ dependencies = [
     "cryptography>=50.0.0",
     "truststore>=0.10.0",
     "tzdata>=2024.1; platform_system=='Windows'",
+    "joserfc>=1.6,<2",
 ]
 
 [project.optional-dependencies]

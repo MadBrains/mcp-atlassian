@@ -22,6 +22,9 @@ from starlette.requests import Request
 
 from mcp_atlassian.confluence import ConfluenceConfig, ConfluenceFetcher
 from mcp_atlassian.jira import JiraConfig, JiraFetcher
+
+# MadBrains: mados-auth
+from mcp_atlassian.mados_auth import get_runtime
 from mcp_atlassian.servers.async_utils import run_fetcher_call
 from mcp_atlassian.servers.context import MainAppContext
 from mcp_atlassian.utils.credential_command import get_resolver
@@ -1207,6 +1210,9 @@ async def get_jira_fetcher(ctx: Context) -> JiraFetcher:
     Raises:
         ValueError: If configuration or credentials are invalid.
     """
+    # MadBrains: mados-auth
+    if get_runtime() is not None:
+        raise ValueError("Mad OS auth поддерживает только Confluence")
     return await _get_fetcher(ctx, _jira_spec())
 
 
@@ -1222,4 +1228,8 @@ async def get_confluence_fetcher(ctx: Context) -> ConfluenceFetcher:
     Raises:
         ValueError: If configuration or credentials are invalid.
     """
+    # MadBrains: mados-auth
+    mados = get_runtime()
+    if mados is not None:
+        return await mados.fetcher()
     return await _get_fetcher(ctx, _confluence_spec())
