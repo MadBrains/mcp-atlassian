@@ -25,6 +25,9 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from mcp_atlassian.confluence.config import ConfluenceConfig
 from mcp_atlassian.jira.config import JiraConfig
+
+# MadBrains: mados-auth
+from mcp_atlassian.mados_auth import MadOSMiddleware, get_runtime
 from mcp_atlassian.utils.credential_command import (
     deferred_pat_outranks,
     get_resolver,
@@ -306,6 +309,9 @@ class AtlassianMCP(ErrorPreservingFastMCP[MainAppContext]):
         )
 
         header_based_services = {"jira": False, "confluence": False}
+        # MadBrains: mados-auth — credentials are resolved at tool-call time.
+        if get_runtime() is not None:
+            header_based_services["confluence"] = True
         service_headers: dict[str, str] = {}
         request = getattr(req_context, "request", None)
         if request is not None:
@@ -498,6 +504,14 @@ class AtlassianMCP(ErrorPreservingFastMCP[MainAppContext]):
             auth_mounts=auth_mounts,
         )
         final_middleware_list = [user_token_mw]
+        # MadBrains: mados-auth — never interpret Mad OS JWTs as Atlassian tokens.
+        mados = get_runtime()
+        if mados is not None:
+            final_middleware_list = [
+                Middleware(
+                    MadOSMiddleware, runtime=mados, paths=set(auth_paths | auth_mounts)
+                )
+            ]
         if middleware:
             final_middleware_list.extend(middleware)
         app = super().http_app(
@@ -1043,6 +1057,9 @@ def _is_cloud_instance(instance_url: str) -> bool:
 
 def _build_auth_provider() -> HardenedOAuthProxy | None:
     """Create an opt-in OAuth proxy auth provider with DCR + discovery support."""
+    # MadBrains: mados-auth — validate fail-safe configuration before startup.
+    if get_runtime() is not None:
+        return None
     if not is_env_truthy(OAUTH_PROXY_ENABLE_ENV, "false"):
         logger.info(
             "OAuth proxy auth provider disabled; set %s=true to enable DCR/proxy routes.",
