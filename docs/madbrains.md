@@ -101,7 +101,7 @@ Token в Mad OS: …». Если профиль неактивен: «Ваш п�
 
 ## Выпуск образа
 
-Workflow `MadBrains image` выполняется на push в `madbrains/main`, тег
+Workflow `MadBrains image` выполняется на push в `main`, тег
 `mb-v0.24.6-mb.N` либо вручную. Сначала запускаются unit tests и полный upstream pre-commit (Ruff + mypy),
 затем образ публикуется в `mb-registry.cr.cloud.ru/mad-os/confluence-mcp` с
 тегами `0.24.6-mb.<run_number>` (или версией тега) и `sha-<полный-sha>`.
